@@ -39,7 +39,7 @@ class Parser {
     bool consume(Token::TokenKind Kind) {
         if (expect(Kind))
             return true;
-        advance()
+        advance();
         return false;
     }
 
@@ -64,6 +64,6 @@ public:
 
     // Parsing entrypoint
     AST *parse();
-}
+};
 
 #endif

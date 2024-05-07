@@ -52,4 +52,90 @@ AST *Parser::parseCalc() {
     // the AST node for this rule
     if (Vars.empty()) return E;
     else return new WithDecl(Vars, E);
+
+// We will use "panic mode" to recover from syntax errors
+// In panic mode, tokens are deleted from the token stream
+// until one is found that the parser can use to continue
+// its work. Most programming languages have symbols that
+// denote an end (ex - ; or }). Such tokens are good candidates
+// to look for
+
+_error:
+    while(!Tok.is(Token::eoi))
+        advance();
+    return nullptr;
+};
+
+Expr *Parser::parseExpr() {
+    Expr *Left = parseTerm();
+    // The repeated group
+    while (Tok.isOneOf(Token::plus, Token::minus)) {
+        BinaryOp::Operator Op = 
+            Tok.is(Token::plus) ? BinaryOp::Plus : BinaryOp::Minus;
+        advance();
+        Expr *Right = parseTerm();
+        Left = new BinaryOp(Op, Left, Right);
+    }
+    return Left;
 }
+
+Expr *Parser::parseTerm() {
+    Expr *Left = parseFactor();
+    while (Tok.isOneOf(Token::star, Token::slash)) {
+        BinaryOp::Operator Op =
+            Tok.is(Token::star) ? BinaryOp::Mul : BinaryOp::Div;
+        advance();
+        Expr *Right = parseFactor();
+        Left = new BinaryOp(Op, Left, Right);
+    }
+    return Left;
+}
+
+Expr *Parser::parseFactor() {
+    Expr *Res = nullptr;
+    switch (Tok.getKind()) {
+    case Token::number:
+        Res = new Factor(Factor::Number, Tok.getText());
+        advance();
+        break;
+    case Token::ident:
+        Res = new Factor(Factor::Ident, Tok.getText());
+        advance();
+        break;
+    case Token::l_paren:
+        advance();
+        Res = parseExpr();
+        if (!consume(Token::r_paren)) break;
+    default:
+        if (!Res) error();
+        while (!Tok.isOneOf(Token::r_paren, Token::star,
+                            Token::plus, Token::minus,
+                            Token::slash, Token::eoi))
+            advance();
+    }
+    return Res;
+}
+
+// Once you'e memorized the patterns used, it's almost tedious work
+// to code the parser based on the grammar rules. This type of parser
+// is called a RECURSIVE DESCENT PARSER
+
+// Note that A RECURSIVE DESCENT PARSER CAN'T BE CONSTRUCTED FROM
+// EVERY GRAMMAR!
+
+// This kind of parser is called LL(1) because it parses the input
+// from Left to right, performing Leftmost deirvation of the sentence
+// with 1 token lookahead.
+
+// More generally, there are LL(k) parsers. An LL parser is called
+// an LL(k) parser if it uses k tokens of lookahead when parsing
+// a sentence. 
+
+// It is easiest to build recursive descent parsers for LL(1) grammars,
+// but it's also possible for LL(k) grammars. In fact, it's guaranteed
+// to terminate for them! While other kinds of grammars can be checked
+// using a recursive descent parser, it's more difficult to implement
+// and most importantly, it's NOT guaranteed to terminate.
+
+// Read more here - https://en.wikipedia.org/wiki/LL_parser
+
