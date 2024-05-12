@@ -55,6 +55,21 @@ public:
         // and attach it to the IR builder
         BasicBlock *BB = BasicBlock::Create(M -> getContext(), "entry", MainFn);
         Builder.SetInsertPoint(BB);
+
+        // With this preparation done, the tree traversal can begin
+        Tree -> accept(*this);
+
+        // After the tree traversal, the computed value is printed via
+        // a call to the `call_write()` function
+        // Again, a function prototype (an instance of FunctionType)
+        // has to be created. The only parameter is the current value, V
+        FunctionType *CalcWriteFnTy = FunctionType::get(VoidTy, {Int32Ty}, false);
+        Function *CalcWriteFn = Function::Create(
+            CalcWriteFnTy, GlobalValue::ExternalLinkage, "calc_write", M);
+        Builder.CreateCall(CalcWriteFnTy, CalcWriteFn, {V});
+
+        // The generation finished by returning 0 from the `main()` function
+        Builder.CreateRet(Int32Zero);
     }
 };
 }
