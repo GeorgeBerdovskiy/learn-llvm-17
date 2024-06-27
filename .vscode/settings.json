@@ -2,6 +2,7 @@
     "files.associations": {
         "*.pl": "prolog",
         "*.plt": "prolog",
-        "*.def": "cpp"
+        "*.def": "cpp",
+        "utility": "cpp"
     }
 }

@@ -1,15 +1,20 @@
 #include "tinylang/Basic/TokenKinds.h"
 #include "llvm/Support/ErrorHandling.h"
+
 using namespace tinylang;
+
 static const char * const TokNames[] = {
 #define TOK(ID) #ID,
 #define KEYWORD(ID, FLAG) #ID,
 #include "tinylang/Basic/TokenKinds.def"
-    nullptr
+  nullptr
 };
 
 const char *tok::getTokenName(TokenKind Kind) {
-  return TokNames[Kind];
+  if (Kind < tok::NUM_TOKENS)
+    return TokNames[Kind];
+  llvm_unreachable("unknown TokenKind");
+  return nullptr;
 }
 
 const char *tok::getPunctuatorSpelling(TokenKind Kind) {
@@ -20,6 +25,7 @@ const char *tok::getPunctuatorSpelling(TokenKind Kind) {
   }
   return nullptr;
 }
+
 const char *tok::getKeywordSpelling(TokenKind Kind) {
   switch (Kind) {
 #define KEYWORD(ID, FLAG) case kw_ ## ID: return #ID;
